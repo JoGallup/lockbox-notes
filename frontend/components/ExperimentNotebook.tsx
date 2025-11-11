@@ -41,6 +41,12 @@ export function ExperimentNotebook() {
 
   const createExperiment = async () => {
     if (!newExperimentName.trim()) {
+      toast.error('Please enter an experiment name');
+      return;
+    }
+
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
       return;
     }
 
