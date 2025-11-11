@@ -37,6 +37,8 @@ contract ExperimentLog {
     /// @param name The name of the experiment
     /// @return experimentId The ID of the newly created experiment
     function createExperiment(string calldata name) external returns (uint256 experimentId) {
+        require(bytes(name).length > 0, "ExperimentLog: name cannot be empty");
+
         experimentId = _nextExperimentId;
         _nextExperimentId++;
 
