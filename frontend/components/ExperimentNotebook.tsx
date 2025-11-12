@@ -37,6 +37,8 @@ export function ExperimentNotebook() {
   const [activeExperimentId, setActiveExperimentId] = useState<string | null>(null);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [newStepContent, setNewStepContent] = useState('');
+  const [isCreatingExperiment, setIsCreatingExperiment] = useState(false);
+  const [isAddingStep, setIsAddingStep] = useState(false);
   const loadedExperimentsRef = useRef<Set<string>>(new Set());
 
   const createExperiment = async () => {
@@ -50,23 +52,31 @@ export function ExperimentNotebook() {
       return;
     }
 
-    const experimentId = await experimentLog.createExperiment(newExperimentName);
+    setIsCreatingExperiment(true);
     
-    if (experimentId) {
-      const newExperiment: ExperimentType = {
-        id: experimentId,
-        name: newExperimentName,
-        date: new Date().toISOString().split('T')[0],
-        owner: ethersSigner?.address || '',
-      };
+    try {
+      const experimentId = await experimentLog.createExperiment(newExperimentName);
+      
+      if (experimentId) {
+        const newExperiment: ExperimentType = {
+          id: experimentId,
+          name: newExperimentName,
+          date: new Date().toISOString().split('T')[0],
+          owner: ethersSigner?.address || '',
+        };
 
-      setExperiments([...experiments, newExperiment]);
-      setActiveExperimentId(experimentId);
-      setNewExperimentName('');
-      setShowNewExperimentForm(false);
-      toast.success('Experiment created successfully');
-    } else {
-      toast.error('Failed to create experiment');
+        setExperiments([...experiments, newExperiment]);
+        setActiveExperimentId(experimentId);
+        setNewExperimentName('');
+        setShowNewExperimentForm(false);
+        toast.success('Experiment created successfully');
+      } else {
+        toast.error('Failed to create experiment');
+      }
+    } catch (error) {
+      toast.error('Error creating experiment');
+    } finally {
+      setIsCreatingExperiment(false);
     }
   };
 
@@ -86,32 +96,40 @@ export function ExperimentNotebook() {
       return;
     }
 
-    const stepId = await experimentLog.addStep(
-      activeExperimentId,
-      newStepTitle,
-      newStepContent,
-      true
-    );
+    setIsAddingStep(true);
 
-    if (stepId) {
-      const newStep: StepType = {
-        id: stepId,
-        experimentId: activeExperimentId,
-        title: newStepTitle,
-        content: newStepContent,
-        isEncrypted: true,
-      };
+    try {
+      const stepId = await experimentLog.addStep(
+        activeExperimentId,
+        newStepTitle,
+        newStepContent,
+        true
+      );
 
-      setExperimentSteps({
-        ...experimentSteps,
-        [activeExperimentId]: [...(experimentSteps[activeExperimentId] || []), newStep],
-      });
+      if (stepId) {
+        const newStep: StepType = {
+          id: stepId,
+          experimentId: activeExperimentId,
+          title: newStepTitle,
+          content: newStepContent,
+          isEncrypted: true,
+        };
 
-      setNewStepTitle('');
-      setNewStepContent('');
-      toast.success('Step added successfully');
-    } else {
-      toast.error('Failed to add step');
+        setExperimentSteps({
+          ...experimentSteps,
+          [activeExperimentId]: [...(experimentSteps[activeExperimentId] || []), newStep],
+        });
+
+        setNewStepTitle('');
+        setNewStepContent('');
+        toast.success('Step added successfully');
+      } else {
+        toast.error('Failed to add step');
+      }
+    } catch (error) {
+      toast.error('Error adding step');
+    } finally {
+      setIsAddingStep(false);
     }
   };
 
