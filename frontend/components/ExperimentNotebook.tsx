@@ -304,8 +304,15 @@ export function ExperimentNotebook() {
                   onKeyDown={(e) => e.key === 'Enter' && createExperiment()}
                 />
                 <div className="flex gap-2">
-                  <Button onClick={createExperiment} size="sm" className="flex-1">
-                    Create
+                  <Button onClick={createExperiment} size="sm" className="flex-1" disabled={isCreatingExperiment}>
+                    {isCreatingExperiment ? (
+                      <>
+                        <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create'
+                    )}
                   </Button>
                   <Button
                     onClick={() => setShowNewExperimentForm(false)}
@@ -368,9 +375,18 @@ export function ExperimentNotebook() {
                     onChange={(e) => setNewStepContent(e.target.value)}
                     rows={4}
                   />
-                  <Button onClick={addStep} className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Step
+                  <Button onClick={addStep} className="w-full" disabled={isAddingStep}>
+                    {isAddingStep ? (
+                      <>
+                        <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Adding Step...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Step
+                      </>
+                    )}
                   </Button>
                 </div>
               </Card>
