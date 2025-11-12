@@ -102,6 +102,7 @@ contract ExperimentLog {
         require(step.exists, "ExperimentLog: step does not exist");
 
         Experiment storage experiment = _experiments[step.experimentId];
+        require(experiment.exists, "ExperimentLog: experiment does not exist");
         require(experiment.owner == msg.sender, "ExperimentLog: caller is not the experiment owner");
         require(bytes(title).length > 0, "ExperimentLog: title cannot be empty");
 
