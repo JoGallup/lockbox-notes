@@ -29,8 +29,8 @@ contract ExperimentLog {
     mapping(uint256 => Step) private _steps;
 
     event ExperimentCreated(uint256 indexed experimentId, address indexed owner, string name, uint256 createdAt);
-    event StepAdded(uint256 indexed stepId, uint256 indexed experimentId, string title);
-    event StepUpdated(uint256 indexed stepId, uint256 indexed experimentId);
+    event StepAdded(uint256 indexed stepId, uint256 indexed experimentId, string title, bool isEncrypted);
+    event StepUpdated(uint256 indexed stepId, uint256 indexed experimentId, bool isEncrypted);
     event StepDeleted(uint256 indexed stepId, uint256 indexed experimentId);
 
     /// @notice Creates a new experiment
@@ -84,7 +84,7 @@ contract ExperimentLog {
 
         _experimentSteps[experimentId].push(stepId);
 
-        emit StepAdded(stepId, experimentId, title);
+        emit StepAdded(stepId, experimentId, title, isEncrypted);
     }
 
     /// @notice Updates an existing step
@@ -110,7 +110,7 @@ contract ExperimentLog {
         step.content = content;
         step.isEncrypted = isEncrypted;
 
-        emit StepUpdated(stepId, step.experimentId);
+        emit StepUpdated(stepId, step.experimentId, isEncrypted);
     }
 
     /// @notice Deletes a step from an experiment
