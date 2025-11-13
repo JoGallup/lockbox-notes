@@ -39,13 +39,39 @@ export function ExperimentNotebook() {
   const [newStepContent, setNewStepContent] = useState('');
   const [isCreatingExperiment, setIsCreatingExperiment] = useState(false);
   const [isAddingStep, setIsAddingStep] = useState(false);
+  const [experimentNameError, setExperimentNameError] = useState('');
+  const [stepTitleError, setStepTitleError] = useState('');
+  const [stepContentError, setStepContentError] = useState('');
   const loadedExperimentsRef = useRef<Set<string>>(new Set());
 
+  const validateExperimentName = (name: string): string => {
+    if (!name.trim()) return 'Experiment name is required';
+    if (name.length < 3) return 'Experiment name must be at least 3 characters';
+    if (name.length > 100) return 'Experiment name must be less than 100 characters';
+    return '';
+  };
+
+  const validateStepTitle = (title: string): string => {
+    if (!title.trim()) return 'Step title is required';
+    if (title.length < 3) return 'Step title must be at least 3 characters';
+    if (title.length > 200) return 'Step title must be less than 200 characters';
+    return '';
+  };
+
+  const validateStepContent = (content: string): string => {
+    if (!content.trim()) return 'Step content is required';
+    if (content.length < 10) return 'Step content must be at least 10 characters';
+    if (content.length > 5000) return 'Step content must be less than 5000 characters';
+    return '';
+  };
+
   const createExperiment = async () => {
-    if (!newExperimentName.trim()) {
-      toast.error('Please enter an experiment name');
+    const nameError = validateExperimentName(newExperimentName);
+    if (nameError) {
+      setExperimentNameError(nameError);
       return;
     }
+    setExperimentNameError('');
 
     if (!isConnected) {
       toast.error('Please connect your wallet first');
@@ -86,10 +112,20 @@ export function ExperimentNotebook() {
       return;
     }
 
-    if (!newStepTitle.trim() || !newStepContent.trim()) {
-      toast.error('Please fill in both step title and content');
+    const titleError = validateStepTitle(newStepTitle);
+    const contentError = validateStepContent(newStepContent);
+    
+    if (titleError) {
+      setStepTitleError(titleError);
       return;
     }
+    if (contentError) {
+      setStepContentError(contentError);
+      return;
+    }
+    
+    setStepTitleError('');
+    setStepContentError('');
 
     if (!isConnected) {
       toast.error('Please connect your wallet first');
@@ -300,9 +336,16 @@ export function ExperimentNotebook() {
                 <Input
                   placeholder="Experiment name"
                   value={newExperimentName}
-                  onChange={(e) => setNewExperimentName(e.target.value)}
+                  onChange={(e) => {
+                    setNewExperimentName(e.target.value);
+                    setExperimentNameError('');
+                  }}
                   onKeyDown={(e) => e.key === 'Enter' && createExperiment()}
+                  className={experimentNameError ? 'border-red-500' : ''}
                 />
+                {experimentNameError && (
+                  <p className="text-sm text-red-500">{experimentNameError}</p>
+                )}
                 <div className="flex gap-2">
                   <Button onClick={createExperiment} size="sm" className="flex-1" disabled={isCreatingExperiment}>
                     {isCreatingExperiment ? (
@@ -364,17 +407,35 @@ export function ExperimentNotebook() {
               <Card className="p-6">
                 <h3 className="font-semibold text-foreground mb-4">Add New Step</h3>
                 <div className="space-y-4">
-                  <Input
-                    placeholder="Step title (e.g., 'Initial Hypothesis', 'Dataset Collection')"
-                    value={newStepTitle}
-                    onChange={(e) => setNewStepTitle(e.target.value)}
-                  />
-                  <Textarea
-                    placeholder="Step details, parameters, observations, data..."
-                    value={newStepContent}
-                    onChange={(e) => setNewStepContent(e.target.value)}
-                    rows={4}
-                  />
+                  <div>
+                    <Input
+                      placeholder="Step title (e.g., 'Initial Hypothesis', 'Dataset Collection')"
+                      value={newStepTitle}
+                      onChange={(e) => {
+                        setNewStepTitle(e.target.value);
+                        setStepTitleError('');
+                      }}
+                      className={stepTitleError ? 'border-red-500' : ''}
+                    />
+                    {stepTitleError && (
+                      <p className="text-sm text-red-500 mt-1">{stepTitleError}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Textarea
+                      placeholder="Step details, parameters, observations, data..."
+                      value={newStepContent}
+                      onChange={(e) => {
+                        setNewStepContent(e.target.value);
+                        setStepContentError('');
+                      }}
+                      rows={4}
+                      className={stepContentError ? 'border-red-500' : ''}
+                    />
+                    {stepContentError && (
+                      <p className="text-sm text-red-500 mt-1">{stepContentError}</p>
+                    )}
+                  </div>
                   <Button onClick={addStep} className="w-full" disabled={isAddingStep}>
                     {isAddingStep ? (
                       <>
