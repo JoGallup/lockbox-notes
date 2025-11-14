@@ -176,6 +176,26 @@ contract ExperimentLog {
         }
     }
 
+    /// @notice Gets all steps for an experiment (gas optimized version)
+    /// @param experimentId The ID of the experiment
+    /// @return stepIds Array of step IDs
+    function getExperimentStepIds(uint256 experimentId) external view returns (uint256[] memory stepIds) {
+        require(_experiments[experimentId].exists, "ExperimentLog: experiment does not exist");
+        stepIds = _experimentSteps[experimentId];
+    }
+
+    /// @notice Gets step details in batch for gas efficiency
+    /// @param stepIds Array of step IDs to retrieve
+    /// @return steps Array of step details
+    function getStepsBatch(uint256[] calldata stepIds) external view returns (Step[] memory steps) {
+        steps = new Step[](stepIds.length);
+        
+        for (uint256 i = 0; i < stepIds.length; i++) {
+            steps[i] = _steps[stepIds[i]];
+            require(steps[i].exists, "ExperimentLog: step does not exist");
+        }
+    }
+
     /// @notice Gets the total number of experiments created
     /// @return count The total experiment count
     function getExperimentCount() external view returns (uint256 count) {
