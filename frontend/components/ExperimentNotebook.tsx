@@ -312,20 +312,21 @@ export function ExperimentNotebook() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
         {/* Sidebar - Experiments List */}
-        <div className="lg:col-span-1">
-          <Card className="p-4">
+        <div className="xl:col-span-1">
+          <Card className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-foreground flex items-center gap-2">
-                <FlaskConical className="h-5 w-5 text-lab-blue" />
+              <h2 className="font-semibold text-foreground flex items-center gap-2 text-sm sm:text-base">
+                <FlaskConical className="h-4 w-4 sm:h-5 sm:w-5 text-lab-blue" />
                 Experiments
               </h2>
               <Button
                 size="sm"
                 onClick={() => setShowNewExperimentForm(!showNewExperimentForm)}
                 variant="default"
+                className="h-8 w-8 sm:h-auto sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -391,21 +392,21 @@ export function ExperimentNotebook() {
         </div>
 
         {/* Main Content - Experiment Steps */}
-        <div className="lg:col-span-3">
+        <div className="xl:col-span-3">
           {activeExperiment ? (
-            <div className="space-y-6">
-              <Card className="p-6 bg-gradient-to-br from-lab-blue/5 to-lab-teal/5">
-                <h2 className="text-2xl font-bold text-foreground mb-2">
+            <div className="space-y-4 sm:space-y-6">
+              <Card className="p-4 sm:p-6 bg-gradient-to-br from-lab-blue/5 to-lab-teal/5">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
                   {activeExperiment.name}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Started on {activeExperiment.date}
                 </p>
               </Card>
 
               {/* Add New Step Form */}
-              <Card className="p-6">
-                <h3 className="font-semibold text-foreground mb-4">Add New Step</h3>
+              <Card className="p-4 sm:p-6">
+                <h3 className="font-semibold text-foreground mb-4 text-sm sm:text-base">Add New Step</h3>
                 <div className="space-y-4">
                   <div>
                     <Input
@@ -453,7 +454,7 @@ export function ExperimentNotebook() {
               </Card>
 
               {/* Experiment Steps */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {activeSteps.length > 0 ? (
                   activeSteps.map((step) => (
                     <ExperimentStep
@@ -468,8 +469,8 @@ export function ExperimentNotebook() {
                     />
                   ))
                 ) : (
-                  <Card className="p-8 text-center">
-                    <p className="text-muted-foreground">
+                  <Card className="p-6 sm:p-8 text-center">
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       No steps yet. Add your first experiment step above.
                     </p>
                   </Card>
