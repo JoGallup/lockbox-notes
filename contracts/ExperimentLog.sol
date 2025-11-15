@@ -23,6 +23,13 @@ contract ExperimentLog {
 
     uint256 private _nextExperimentId;
     uint256 private _nextStepId;
+    
+    // Security: Prevent re-initialization attacks
+    bool private _initialized;
+    
+    // Security: Rate limiting for step creation
+    mapping(address => uint256) private _lastStepCreation;
+    uint256 private constant STEP_CREATION_COOLDOWN = 1 minutes;
 
     mapping(uint256 => Experiment) private _experiments;
     mapping(uint256 => uint256[]) private _experimentSteps;
@@ -32,6 +39,10 @@ contract ExperimentLog {
     event StepAdded(uint256 indexed stepId, uint256 indexed experimentId, string title, bool isEncrypted);
     event StepUpdated(uint256 indexed stepId, uint256 indexed experimentId, bool isEncrypted);
     event StepDeleted(uint256 indexed stepId, uint256 indexed experimentId);
+
+    constructor() {
+        _initialized = true;
+    }
 
     /// @notice Creates a new experiment
     /// @param name The name of the experiment
@@ -69,6 +80,10 @@ contract ExperimentLog {
         require(experiment.exists, "ExperimentLog: experiment does not exist");
         require(experiment.owner == msg.sender, "ExperimentLog: caller is not the experiment owner");
         require(bytes(title).length > 0, "ExperimentLog: title cannot be empty");
+        
+        // Security: Rate limiting to prevent spam
+        require(block.timestamp >= _lastStepCreation[msg.sender] + STEP_CREATION_COOLDOWN, "ExperimentLog: step creation rate limited");
+        _lastStepCreation[msg.sender] = block.timestamp;
 
         stepId = _nextStepId;
         _nextStepId++;
