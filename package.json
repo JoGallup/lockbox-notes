@@ -1,6 +1,6 @@
 {
   "name": "lockbox-notes",
-  "description": "Hardhat-based template for developing FHEVM Solidity smart contracts",
+  "description": "Encrypted experiment logging platform with field-level encryption and selective sharing",
   "version": "0.1.0",
   "engines": {
     "node": ">=20",
@@ -21,7 +21,10 @@
     "wallet",
     "web3",
     "typescript",
-    "hardhat"
+    "hardhat",
+    "encryption",
+    "research",
+    "experiments"
   ],
   "dependencies": {
     "encrypted-types": "^0.0.4",
@@ -76,10 +79,13 @@
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
     "prettier:write": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "test": "cross-env HARDHAT_DISABLE_EDR=1 hardhat test",
+    "test:fast": "cross-env HARDHAT_DISABLE_EDR=1 hardhat test --parallel",
     "test:sepolia": "cross-env HARDHAT_DISABLE_EDR=1 hardhat test --network sepolia",
+    "deploy:local": "cross-env HARDHAT_DISABLE_EDR=1 hardhat deploy --network localhost",
+    "deploy:testnet": "cross-env HARDHAT_DISABLE_EDR=1 hardhat deploy --network testnet",
+    "node:local": "hardhat node",
     "build:ts": "tsc --project tsconfig.json",
-    "typechain": "cross-env HARDHAT_DISABLE_EDR=1 TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
-    "node": "cross-env HARDHAT_DISABLE_EDR=1 hardhat node"
+    "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain"
   },
   "overrides": {
     "ws@>=7.0.0 <7.5.10": ">=7.5.10",
