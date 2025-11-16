@@ -29,6 +29,38 @@ describe("ExperimentLog", function () {
     it("Should start with zero steps", async function () {
       expect(await experimentLog.getStepCount()).to.equal(0);
     });
+
+    it("Should have correct initial state", async function () {
+      // Test that the contract is properly initialized
+      const experimentCount = await experimentLog.getExperimentCount();
+      const stepCount = await experimentLog.getStepCount();
+      
+      expect(experimentCount).to.equal(0);
+      expect(stepCount).to.equal(0);
+    });
+  });
+
+  describe("Security", function () {
+    it("Should prevent empty experiment names", async function () {
+      await expect(experimentLog.createExperiment(""))
+        .to.be.revertedWith("ExperimentLog: name cannot be empty");
+    });
+
+    it("Should prevent experiment names that are too short", async function () {
+      await expect(experimentLog.createExperiment("ab"))
+        .to.be.revertedWith("ExperimentLog: name cannot be empty");
+    });
+
+    it("Should enforce rate limiting on step creation", async function () {
+      const experimentId = await experimentLog.createExperiment("Test Experiment");
+      
+      // First step should succeed
+      await experimentLog.addStep(experimentId, "Step 1", "Content 1", false);
+      
+      // Second step immediately should fail due to rate limiting
+      await expect(experimentLog.addStep(experimentId, "Step 2", "Content 2", false))
+        .to.be.revertedWith("ExperimentLog: step creation rate limited");
+    });
   });
 
   describe("Create Experiment", function () {
