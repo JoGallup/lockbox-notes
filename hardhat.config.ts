@@ -109,13 +109,14 @@ const config: HardhatUserConfig = {
         // https://github.com/paulrberg/hardhat-template/issues/31
         bytecodeHash: "none",
       },
-      // Disable the optimizer when debugging
-      // https://hardhat.org/hardhat-network/#solidity-optimizer-support
+      // Enhanced optimizer settings for better gas efficiency
       optimizer: {
         enabled: true,
-        runs: 800,
+        runs: 200, // Optimized for deployment cost
       },
       evmVersion: "cancun",
+      // Additional optimization for contract size
+      viaIR: true,
     },
   },
   typechain: {
