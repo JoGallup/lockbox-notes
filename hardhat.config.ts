@@ -11,6 +11,30 @@ import { vars as _vars } from "hardhat/config";
 import "dotenv/config";
 import "solidity-coverage";
 
+// Environment configuration validation
+function validateEnvironment(): void {
+  const requiredVars = [
+    'INFURA_API_KEY',
+    'ETHERSCAN_API_KEY'
+  ];
+
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+
+  if (missingVars.length > 0) {
+    console.warn(`⚠️  Missing environment variables: ${missingVars.join(', ')}`);
+    console.warn('Some features may not work properly. Set them in your .env file or use:');
+    console.warn('npx hardhat vars set <VARIABLE_NAME>');
+  }
+
+  // Validate network configurations
+  if (process.env.SEPOLIA_RPC_URL && !process.env.SEPOLIA_RPC_URL.includes('infura.io') && !process.env.SEPOLIA_RPC_URL.includes('sepolia')) {
+    console.warn('⚠️  SEPOLIA_RPC_URL seems incorrect. Expected Infura or Alchemy URL');
+  }
+}
+
+// Validate environment on config load
+validateEnvironment();
+
 import "./tasks/accounts";
 
 // Run 'npx hardhat vars setup' to see the list of variables that need to be set
