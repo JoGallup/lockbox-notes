@@ -47,16 +47,37 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   namedAccounts: {
     deployer: 0,
+    admin: 1,
+    user1: 2,
+    user2: 3,
   },
   etherscan: {
     apiKey: {
       sepolia: ETHERSCAN_API_KEY,
+      mainnet: vars.get("MAINNET_ETHERSCAN_API_KEY", ""),
+      polygon: vars.get("POLYGONSCAN_API_KEY", ""),
+      arbitrumOne: vars.get("ARBISCAN_API_KEY", ""),
+      optimism: vars.get("OPTIMISM_ETHERSCAN_API_KEY", ""),
     },
+    customChains: [
+      {
+        network: "zama",
+        chainId: 327,
+        urls: {
+          apiURL: "https://explorer.zama.ai/api",
+          browserURL: "https://explorer.zama.ai",
+        },
+      },
+    ],
   },
   gasReporter: {
     currency: "USD",
     enabled: process.env.REPORT_GAS ? true : false,
     excludeContracts: [],
+    gasPrice: 20,
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+    showMethodSig: true,
+    showTimeSpent: true,
   },
   networks: {
     hardhat: {
@@ -94,6 +115,46 @@ const config: HardhatUserConfig = {
       ...(maxFeePerGas ? { maxFeePerGas } : {}),
       ...(maxPriorityFeePerGas ? { maxPriorityFeePerGas } : {}),
     },
+    mainnet: {
+      accounts: PRIVATE_KEY
+        ? [PRIVATE_KEY]
+        : {
+            mnemonic: MNEMONIC,
+            path: "m/44'/60'/0'/0/",
+            count: 5, // Fewer accounts for mainnet for security
+          },
+      chainId: 1,
+      url: process.env.MAINNET_RPC_URL ?? `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      timeout: 120000,
+      ...(maxFeePerGas ? { maxFeePerGas } : {}),
+      ...(maxPriorityFeePerGas ? { maxPriorityFeePerGas } : {}),
+    },
+    polygon: {
+      accounts: PRIVATE_KEY
+        ? [PRIVATE_KEY]
+        : {
+            mnemonic: MNEMONIC,
+            path: "m/44'/60'/0'/0/",
+            count: 10,
+          },
+      chainId: 137,
+      url: process.env.POLYGON_RPC_URL ?? "https://polygon-rpc.com",
+      timeout: 120000,
+      gasPrice: 30000000000, // 30 gwei
+    },
+    zama: {
+      accounts: PRIVATE_KEY
+        ? [PRIVATE_KEY]
+        : {
+            mnemonic: MNEMONIC,
+            path: "m/44'/60'/0'/0/",
+            count: 5,
+          },
+      chainId: 327,
+      url: process.env.ZAMA_RPC_URL ?? "https://devnet.zama.ai",
+      timeout: 120000,
+      gasPrice: 1000000000, // 1 gwei
+    },
   },
   paths: {
     artifacts: "./artifacts",
@@ -112,11 +173,23 @@ const config: HardhatUserConfig = {
       // Enhanced optimizer settings for better gas efficiency
       optimizer: {
         enabled: true,
-        runs: 200, // Optimized for deployment cost
+        runs: 1000, // Higher runs for better runtime gas optimization
+        details: {
+          yul: true,
+          yulDetails: {
+            stackAllocation: true,
+          },
+        },
       },
       evmVersion: "cancun",
       // Additional optimization for contract size
       viaIR: true,
+      // Output selection for better debugging
+      outputSelection: {
+        "*": {
+          "*": ["evm.bytecode", "evm.deployedBytecode", "devdoc", "userdoc", "metadata", "abi", "storageLayout"],
+        },
+      },
     },
   },
   typechain: {
