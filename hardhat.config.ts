@@ -35,6 +35,20 @@ function validateEnvironment(): void {
 // Validate environment on config load
 validateEnvironment();
 
+// Deployment configuration helper
+function getDeploymentConfig(networkName: string) {
+  const configs = {
+    hardhat: { confirmations: 1, timeout: 60000 },
+    localhost: { confirmations: 1, timeout: 60000 },
+    sepolia: { confirmations: 2, timeout: 120000 },
+    mainnet: { confirmations: 3, timeout: 300000 },
+    polygon: { confirmations: 2, timeout: 120000 },
+    zama: { confirmations: 1, timeout: 120000 },
+  };
+
+  return configs[networkName as keyof typeof configs] || configs.hardhat;
+}
+
 import "./tasks/accounts";
 
 // Run 'npx hardhat vars setup' to see the list of variables that need to be set
@@ -219,6 +233,21 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "types",
     target: "ethers-v6",
+  },
+  // Custom paths for better organization
+  paths: {
+    artifacts: "./artifacts",
+    cache: "./cache",
+    sources: "./contracts",
+    tests: "./test",
+    deployments: "./deployments",
+  },
+  // Contract sizing for optimization tracking
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
 };
 
