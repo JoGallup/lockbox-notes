@@ -414,4 +414,109 @@ describe("ExperimentLog", function () {
       expect(isOwner).to.be.false;
     });
   });
+
+  describe("Gas Optimization and Performance", function () {
+    it("Should efficiently handle multiple experiments per user", async function () {
+      // Create multiple experiments
+      for (let i = 0; i < 10; i++) {
+        await experimentLog.createExperiment(`Experiment ${i}`);
+      }
+
+      const experimentCount = await experimentLog.getExperimentCount();
+      expect(experimentCount).to.equal(10);
+    });
+
+    it("Should efficiently handle multiple steps per experiment", async function () {
+      await experimentLog.createExperiment("Performance Test");
+
+      // Add multiple steps
+      for (let i = 0; i < 20; i++) {
+        await experimentLog.addStep(0, `Step ${i}`, `Content ${i}`, i % 2 === 0);
+      }
+
+      const steps = await experimentLog.getExperimentSteps(0);
+      expect(steps.length).to.equal(20);
+    });
+
+    it("Should maintain performance with batch operations", async function () {
+      await experimentLog.createExperiment("Batch Performance Test");
+
+      // Add steps for batch deletion
+      const stepIds: bigint[] = [];
+      for (let i = 0; i < 10; i++) {
+        const tx = await experimentLog.addStep(0, `Step ${i}`, `Content ${i}`, false);
+        await tx.wait();
+        const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+        // Note: In a real implementation, you'd extract stepId from events
+        stepIds.push(BigInt(i));
+      }
+
+      // Batch delete (using first 5 steps)
+      await experimentLog.batchDeleteSteps(stepIds.slice(0, 5));
+
+      const remainingSteps = await experimentLog.getExperimentStepIds(0);
+      expect(remainingSteps.length).to.equal(5);
+    });
+  });
+
+  describe("Edge Cases and Security", function () {
+    it("Should handle empty string operations gracefully", async function () {
+      await expect(experimentLog.createExperiment(""))
+        .to.be.revertedWith("ExperimentLog: name cannot be empty");
+    });
+
+    it("Should prevent step creation with empty title", async function () {
+      await experimentLog.createExperiment("Test Experiment");
+
+      await expect(experimentLog.addStep(0, "", "Content", false))
+        .to.be.revertedWith("ExperimentLog: title cannot be empty");
+    });
+
+    it("Should handle maximum reasonable input lengths", async function () {
+      const longName = "A".repeat(100); // Maximum name length from validation
+      await experimentLog.createExperiment(longName);
+
+      const longTitle = "B".repeat(200); // Maximum title length from validation
+      const longContent = "C".repeat(2000); // Reasonable content length
+
+      await experimentLog.addStep(0, longTitle, longContent, true);
+
+      const steps = await experimentLog.getExperimentSteps(0);
+      expect(steps[0].title).to.equal(longTitle);
+      expect(steps[0].content).to.equal(longContent);
+    });
+
+    it("Should maintain data integrity across operations", async function () {
+      // Create experiment
+      await experimentLog.createExperiment("Integrity Test");
+
+      // Add multiple steps
+      await experimentLog.addStep(0, "Step 1", "Content 1", false);
+      await experimentLog.addStep(0, "Step 2", "Content 2", true);
+      await experimentLog.addStep(0, "Step 3", "Content 3", false);
+
+      // Update middle step
+      await experimentLog.updateStep(1, "Updated Step 2", "Updated Content 2", false);
+
+      // Delete first step
+      await experimentLog.deleteStep(0);
+
+      // Verify remaining steps
+      const steps = await experimentLog.getExperimentSteps(0);
+      expect(steps.length).to.equal(2);
+      expect(steps[0].title).to.equal("Updated Step 2");
+      expect(steps[1].title).to.equal("Step 3");
+    });
+
+    it("Should prevent rate limiting bypass attempts", async function () {
+      await experimentLog.createExperiment("Rate Limit Test");
+
+      // First step should succeed
+      await experimentLog.addStep(0, "Step 1", "Content 1", false);
+
+      // Second step within cooldown period should fail
+      await expect(experimentLog.addStep(0, "Step 2", "Content 2", false))
+        .to.be.revertedWith("ExperimentLog: step creation rate limited");
+    });
+  });
 });
