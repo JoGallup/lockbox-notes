@@ -42,7 +42,32 @@ export function ExperimentNotebook() {
   const [experimentNameError, setExperimentNameError] = useState('');
   const [stepTitleError, setStepTitleError] = useState('');
   const [stepContentError, setStepContentError] = useState('');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const loadedExperimentsRef = useRef<Set<string>>(new Set());
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load draft on component mount
+  useEffect(() => {
+    loadDraftFromLocalStorage();
+  }, []);
+
+  // Auto-save draft when form data changes
+  useEffect(() => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      saveDraftToLocalStorage();
+    }, 2000); // Auto-save after 2 seconds of inactivity
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [newExperimentName, newStepTitle, newStepContent, activeExperimentId, autoSaveEnabled]);
 
   const validateExperimentName = (name: string): string => {
     if (!name.trim()) return 'Experiment name is required';
@@ -63,6 +88,56 @@ export function ExperimentNotebook() {
     if (content.length < 10) return 'Step content must be at least 10 characters';
     if (content.length > 5000) return 'Step content must be less than 5000 characters';
     return '';
+  };
+
+  // Auto-save draft functionality
+  const saveDraftToLocalStorage = () => {
+    if (!autoSaveEnabled) return;
+
+    const draft = {
+      newExperimentName,
+      newStepTitle,
+      newStepContent,
+      activeExperimentId,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem('experiment-notebook-draft', JSON.stringify(draft));
+      setLastSaved(new Date());
+    } catch (error) {
+      console.warn('Failed to save draft to localStorage:', error);
+    }
+  };
+
+  const loadDraftFromLocalStorage = () => {
+    try {
+      const draft = localStorage.getItem('experiment-notebook-draft');
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        const draftAge = new Date().getTime() - new Date(parsed.timestamp).getTime();
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        // Only load draft if it's less than 24 hours old
+        if (draftAge < oneDay) {
+          setNewExperimentName(parsed.newExperimentName || '');
+          setNewStepTitle(parsed.newStepTitle || '');
+          setNewStepContent(parsed.newStepContent || '');
+          setActiveExperimentId(parsed.activeExperimentId || null);
+          toast.info('Draft loaded from previous session');
+        } else {
+          localStorage.removeItem('experiment-notebook-draft');
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load draft from localStorage:', error);
+    }
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem('experiment-notebook-draft');
+    setLastSaved(null);
+    toast.info('Draft cleared');
   };
 
   const createExperiment = async () => {
@@ -99,8 +174,18 @@ export function ExperimentNotebook() {
       } else {
         toast.error('Failed to create experiment');
       }
-    } catch {
-      toast.error('Error creating experiment');
+    } catch (error: any) {
+      console.error('Error creating experiment:', error);
+      const errorMessage = error?.message || 'Unknown error occurred';
+      if (errorMessage.includes('user rejected')) {
+        toast.error('Transaction cancelled by user');
+      } else if (errorMessage.includes('insufficient funds')) {
+        toast.error('Insufficient funds for transaction');
+      } else if (errorMessage.includes('network')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        toast.error(`Failed to create experiment: ${errorMessage}`);
+      }
     } finally {
       setIsCreatingExperiment(false);
     }
