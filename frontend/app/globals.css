@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 25% 97%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 200 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    
+    --lab-blue: 200 100% 50%;
+    --lab-teal: 175 80% 45%;
+    --lab-amber: 38 95% 55%;
+    --lab-purple: 265 85% 60%;
+    --encrypted: 280 85% 55%;
+    --success: 145 80% 42%;
+    
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 200 100% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 92%;
+    --ring: 200 100% 45%;
+
+    --radius: 0.75rem;
+    
+    --gradient-hero: linear-gradient(135deg, hsl(200 100% 50% / 0.1), hsl(175 80% 45% / 0.1), hsl(265 85% 60% / 0.05));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 25% 98%));
+    --gradient-primary: linear-gradient(135deg, hsl(200 100% 50%), hsl(175 80% 45%));
+    --gradient-encrypted: linear-gradient(135deg, hsl(280 85% 55%), hsl(265 85% 60%));
+    --gradient-glow: radial-gradient(circle at 50% 50%, hsl(200 100% 50% / 0.15), transparent 70%);
+    
+    --shadow-sm: 0 1px 2px hsl(220 20% 10% / 0.04);
+    --shadow-md: 0 4px 12px hsl(220 20% 10% / 0.06);
+    --shadow-lg: 0 8px 24px hsl(220 20% 10% / 0.08);
+    --shadow-glow: 0 0 40px hsl(200 100% 50% / 0.15);
+    --shadow-card: 0 2px 8px hsl(220 20% 10% / 0.04), 0 8px 24px hsl(220 20% 10% / 0.06);
+  }
+
+  .dark {
+    --background: 220 25% 6%;
+    --foreground: 220 15% 95%;
+
+    --card: 220 22% 10%;
+    --card-foreground: 220 15% 95%;
+
+    --popover: 220 22% 10%;
+    --popover-foreground: 220 15% 95%;
+
+    --primary: 200 100% 55%;
+    --primary-foreground: 220 25% 6%;
+    
+    --lab-blue: 200 100% 60%;
+    --lab-teal: 175 80% 55%;
+    --lab-amber: 38 95% 60%;
+    --lab-purple: 265 85% 65%;
+    --encrypted: 280 85% 65%;
+    --success: 145 80% 50%;
+
+    --secondary: 220 20% 14%;
+    --secondary-foreground: 220 15% 95%;
+
+    --muted: 220 18% 12%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 200 100% 55%;
+    --accent-foreground: 220 25% 6%;
+
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 18% 18%;
+    --input: 220 18% 14%;
+    --ring: 200 100% 55%;
+    
+    --gradient-hero: linear-gradient(135deg, hsl(200 100% 60% / 0.08), hsl(175 80% 55% / 0.08), hsl(265 85% 65% / 0.05));
+    --gradient-card: linear-gradient(145deg, hsl(220 22% 12%), hsl(220 22% 10%));
+    --gradient-primary: linear-gradient(135deg, hsl(200 100% 60%), hsl(175 80% 55%));
+    --gradient-encrypted: linear-gradient(135deg, hsl(280 85% 65%), hsl(265 85% 65%));
+    --gradient-glow: radial-gradient(circle at 50% 50%, hsl(200 100% 60% / 0.12), transparent 70%);
+    
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.25);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 40px hsl(200 100% 60% / 0.2);
+    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.2), 0 8px 24px hsl(0 0% 0% / 0.25);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg;
+  }
+  
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--lab-blue))] via-[hsl(var(--lab-teal))] to-[hsl(var(--lab-purple))];
+  }
+  
+  .gradient-border {
+    @apply relative;
+    background: linear-gradient(var(--background), var(--background)) padding-box,
+                var(--gradient-primary) border-box;
+    border: 2px solid transparent;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-1;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .glow-effect {
+    @apply relative;
+  }
+  
+  .glow-effect::before {
+    content: '';
+    @apply absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300;
+    background: var(--gradient-glow);
+    filter: blur(20px);
+    z-index: -1;
+  }
+  
+  .glow-effect:hover::before {
+    @apply opacity-100;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+  
+  .pattern-dots {
+    background-image: radial-gradient(hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  .pattern-grid {
+    background-image: 
+      linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--primary) / 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
