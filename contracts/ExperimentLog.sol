@@ -214,4 +214,63 @@ contract ExperimentLog {
     function getStepCount() external view returns (uint256 count) {
         count = _nextStepId;
     }
+
+    /// @notice Batch delete multiple steps from an experiment
+    /// @param stepIds Array of step IDs to delete
+    function batchDeleteSteps(uint256[] calldata stepIds) external {
+        require(stepIds.length > 0, "ExperimentLog: no steps provided");
+        require(stepIds.length <= 50, "ExperimentLog: too many steps to delete at once");
+
+        for (uint256 i = 0; i < stepIds.length; i++) {
+            uint256 stepId = stepIds[i];
+            Step storage step = _steps[stepId];
+            require(step.exists, "ExperimentLog: step does not exist");
+
+            Experiment storage experiment = _experiments[step.experimentId];
+            require(experiment.owner == msg.sender, "ExperimentLog: caller is not the experiment owner");
+
+            uint256 experimentId = step.experimentId;
+            step.exists = false;
+
+            // Remove from experiment's step list
+            uint256[] storage expSteps = _experimentSteps[experimentId];
+            for (uint256 j = 0; j < expSteps.length; j++) {
+                if (expSteps[j] == stepId) {
+                    expSteps[j] = expSteps[expSteps.length - 1];
+                    expSteps.pop();
+                    break;
+                }
+            }
+
+            emit StepDeleted(stepId, experimentId);
+        }
+    }
+
+    /// @notice Transfer experiment ownership to another address
+    /// @param experimentId The ID of the experiment
+    /// @param newOwner The new owner address
+    function transferExperimentOwnership(uint256 experimentId, address newOwner) external {
+        require(newOwner != address(0), "ExperimentLog: new owner cannot be zero address");
+        require(newOwner != msg.sender, "ExperimentLog: new owner cannot be current owner");
+
+        Experiment storage experiment = _experiments[experimentId];
+        require(experiment.exists, "ExperimentLog: experiment does not exist");
+        require(experiment.owner == msg.sender, "ExperimentLog: caller is not the experiment owner");
+
+        experiment.owner = newOwner;
+
+        emit ExperimentOwnershipTransferred(experimentId, msg.sender, newOwner);
+    }
+
+    /// @notice Check if an address is the owner of an experiment
+    /// @param experimentId The ID of the experiment
+    /// @param account The address to check
+    /// @return isOwner Whether the account is the owner
+    function isExperimentOwner(uint256 experimentId, address account) external view returns (bool isOwner) {
+        Experiment storage experiment = _experiments[experimentId];
+        isOwner = experiment.exists && experiment.owner == account;
+    }
+
+    // New event for ownership transfer
+    event ExperimentOwnershipTransferred(uint256 indexed experimentId, address indexed previousOwner, address indexed newOwner);
 }
