@@ -32,16 +32,38 @@ export function ExperimentStep({
   const [editTitle, setEditTitle] = useState(title);
   const [editContent, setEditContent] = useState(content);
   const [showContent, setShowContent] = useState(!isEncrypted);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSave = () => {
-    onUpdate(id, editTitle, editContent);
-    setIsEditing(false);
+  const handleSave = async () => {
+    setIsUpdating(true);
+    try {
+      await onUpdate(id, editTitle, editContent);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to update step:', error);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditTitle(title);
     setEditContent(content);
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this step? This action cannot be undone.')) {
+      setIsDeleting(true);
+      try {
+        await onDelete(id);
+      } catch (error) {
+        console.error('Failed to delete step:', error);
+      } finally {
+        setIsDeleting(false);
+      }
+    }
   };
 
   const encryptedContent = '•'.repeat(Math.min(content.length, 50)) + (content.length > 50 ? '...' : '');
@@ -111,7 +133,8 @@ export function ExperimentStep({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onDelete(id)}
+                onClick={handleDelete}
+                disabled={isDeleting}
                 className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                 title="Delete step"
               >
@@ -140,11 +163,25 @@ export function ExperimentStep({
               className="bg-background/50 resize-none"
             />
             <div className="flex gap-2">
-              <Button onClick={handleSave} size="sm" className="bg-gradient-to-r from-[hsl(var(--lab-blue))] to-[hsl(var(--lab-teal))]">
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+              <Button
+                onClick={handleSave}
+                size="sm"
+                disabled={isUpdating}
+                className="bg-gradient-to-r from-[hsl(var(--lab-blue))] to-[hsl(var(--lab-teal))]"
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
-              <Button onClick={handleCancel} size="sm" variant="outline">
+              <Button onClick={handleCancel} size="sm" variant="outline" disabled={isUpdating}>
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>
