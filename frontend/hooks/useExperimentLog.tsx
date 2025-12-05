@@ -78,6 +78,8 @@ export const useExperimentLog = (parameters: {
   const [isAddingStep, setIsAddingStep] = useState(false);
   const [isUpdatingStep, setIsUpdatingStep] = useState(false);
   const [isDeletingStep, setIsDeletingStep] = useState(false);
+  const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+  const [isTransferringOwnership, setIsTransferringOwnership] = useState(false);
   const [message, setMessage] = useState<string>("");
 
   const experimentLogRef = useRef<ExperimentLogInfoType | undefined>(undefined);
@@ -85,6 +87,8 @@ export const useExperimentLog = (parameters: {
   const isAddingStepRef = useRef<boolean>(isAddingStep);
   const isUpdatingStepRef = useRef<boolean>(isUpdatingStep);
   const isDeletingStepRef = useRef<boolean>(isDeletingStep);
+  const isBatchDeletingRef = useRef<boolean>(isBatchDeleting);
+  const isTransferringOwnershipRef = useRef<boolean>(isTransferringOwnership);
 
   const experimentLog = useMemo(() => {
     const c = getExperimentLogByChainId(chainId);
@@ -354,6 +358,114 @@ export const useExperimentLog = (parameters: {
     [canDeleteStep, chainId, ethersSigner, experimentLog.address, sameChain, sameSigner]
   );
 
+  const batchDeleteSteps = useCallback(
+    async (stepIds: string[]): Promise<boolean> => {
+      if (!canDeleteStep || !experimentLog.address || !ethersSigner || stepIds.length === 0) {
+        return false;
+      }
+
+      const thisChainId = chainId;
+      const thisAddress = experimentLog.address;
+      const thisSigner = ethersSigner;
+
+      isBatchDeletingRef.current = true;
+      setIsBatchDeleting(true);
+      setMessage(`Batch deleting ${stepIds.length} steps...`);
+
+      try {
+        const isStale = () =>
+          thisAddress !== experimentLogRef.current?.address ||
+          !sameChain.current?.(thisChainId) ||
+          !sameSigner.current?.(thisSigner);
+
+        const contract = new ethers.Contract(
+          thisAddress,
+          experimentLogRef.current?.abi ?? ExperimentLogABI.abi,
+          thisSigner
+        );
+
+        // Convert string IDs to numbers
+        const numericStepIds = stepIds.map(id => parseInt(id, 10));
+
+        const tx: ethers.TransactionResponse = await contract.batchDeleteSteps(numericStepIds);
+        await tx.wait();
+
+        if (isStale()) {
+          setMessage("Ignore batchDeleteSteps");
+          return false;
+        }
+
+        setMessage(`${stepIds.length} steps deleted successfully`);
+        return true;
+      } catch (e) {
+        console.error("batchDeleteSteps failed:", e);
+        setMessage("batchDeleteSteps failed: " + String(e));
+        return false;
+      } finally {
+        isBatchDeletingRef.current = false;
+        setIsBatchDeleting(false);
+      }
+    },
+    [canDeleteStep, chainId, ethersSigner, experimentLog.address, sameChain, sameSigner]
+  );
+
+  const transferExperimentOwnership = useCallback(
+    async (experimentId: string, newOwnerAddress: string): Promise<boolean> => {
+      if (!canCreateExperiment || !experimentLog.address || !ethersSigner) {
+        return false;
+      }
+
+      // Basic validation
+      if (!ethers.isAddress(newOwnerAddress)) {
+        setMessage("Invalid Ethereum address");
+        return false;
+      }
+
+      const thisChainId = chainId;
+      const thisAddress = experimentLog.address;
+      const thisSigner = ethersSigner;
+
+      isTransferringOwnershipRef.current = true;
+      setIsTransferringOwnership(true);
+      setMessage("Transferring experiment ownership...");
+
+      try {
+        const isStale = () =>
+          thisAddress !== experimentLogRef.current?.address ||
+          !sameChain.current?.(thisChainId) ||
+          !sameSigner.current?.(thisSigner);
+
+        const contract = new ethers.Contract(
+          thisAddress,
+          experimentLogRef.current?.abi ?? ExperimentLogABI.abi,
+          thisSigner
+        );
+
+        const tx: ethers.TransactionResponse = await contract.transferExperimentOwnership(
+          parseInt(experimentId, 10),
+          newOwnerAddress
+        );
+        await tx.wait();
+
+        if (isStale()) {
+          setMessage("Ignore transferExperimentOwnership");
+          return false;
+        }
+
+        setMessage("Experiment ownership transferred successfully");
+        return true;
+      } catch (e) {
+        console.error("transferExperimentOwnership failed:", e);
+        setMessage("transferExperimentOwnership failed: " + String(e));
+        return false;
+      } finally {
+        isTransferringOwnershipRef.current = false;
+        setIsTransferringOwnership(false);
+      }
+    },
+    [canCreateExperiment, chainId, ethersSigner, experimentLog.address, sameChain, sameSigner]
+  );
+
   const loadExperimentSteps = useCallback(
     async (experimentId: string): Promise<StepType[]> => {
       if (!experimentLog.address || !ethersReadonlyProvider) {
@@ -395,6 +507,8 @@ export const useExperimentLog = (parameters: {
     isAddingStep,
     isUpdatingStep,
     isDeletingStep,
+    isBatchDeleting,
+    isTransferringOwnership,
     canCreateExperiment,
     canAddStep,
     canUpdateStep,
@@ -403,6 +517,8 @@ export const useExperimentLog = (parameters: {
     addStep,
     updateStep,
     deleteStep,
+    batchDeleteSteps,
+    transferExperimentOwnership,
     loadExperimentSteps,
     message,
     setExperiments,
