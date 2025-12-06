@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { Plus, FlaskConical } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Plus, FlaskConical, Search, Filter, Clock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,6 +44,9 @@ export function ExperimentNotebook() {
   const [stepContentError, setStepContentError] = useState('');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterByEncryption, setFilterByEncryption] = useState<'all' | 'encrypted' | 'decrypted'>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'steps'>('date');
   const loadedExperimentsRef = useRef<Set<string>>(new Set());
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -139,6 +142,54 @@ export function ExperimentNotebook() {
     setLastSaved(null);
     toast.info('Draft cleared');
   };
+
+  // Filtered and sorted experiments
+  const filteredAndSortedExperiments = useMemo(() => {
+    let filtered = experiments.filter(experiment => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = experiment.name.toLowerCase().includes(query);
+        const experimentSteps = experimentSteps[experiment.id] || [];
+        const matchesSteps = experimentSteps.some(step =>
+          step.title.toLowerCase().includes(query) ||
+          step.content.toLowerCase().includes(query)
+        );
+        if (!matchesName && !matchesSteps) return false;
+      }
+
+      // Encryption filter
+      if (filterByEncryption !== 'all') {
+        const experimentSteps = experimentSteps[experiment.id] || [];
+        if (experimentSteps.length === 0) return false;
+
+        const hasEncryptedSteps = experimentSteps.some(step => step.isEncrypted);
+        const hasDecryptedSteps = experimentSteps.some(step => !step.isEncrypted);
+
+        if (filterByEncryption === 'encrypted' && !hasEncryptedSteps) return false;
+        if (filterByEncryption === 'decrypted' && !hasDecryptedSteps) return false;
+      }
+
+      return true;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'steps':
+          const aSteps = (experimentSteps[a.id] || []).length;
+          const bSteps = (experimentSteps[b.id] || []).length;
+          return bSteps - aSteps; // More steps first
+        case 'date':
+        default:
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+    });
+
+    return filtered;
+  }, [experiments, experimentSteps, searchQuery, filterByEncryption, sortBy]);
 
   const createExperiment = async () => {
     const nameError = validateExperimentName(newExperimentName);
@@ -417,6 +468,51 @@ export function ExperimentNotebook() {
               </Button>
             </div>
 
+            {/* Search and Filter Controls */}
+            <div className="space-y-3 mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search experiments and steps..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-9"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex-1">
+                  <select
+                    value={filterByEncryption}
+                    onChange={(e) => setFilterByEncryption(e.target.value as 'all' | 'encrypted' | 'decrypted')}
+                    className="w-full h-9 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="all">All Experiments</option>
+                    <option value="encrypted">With Encrypted Steps</option>
+                    <option value="decrypted">With Decrypted Steps</option>
+                  </select>
+                </div>
+
+                <div className="flex-1">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'steps')}
+                    className="w-full h-9 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="date">Sort by Date</option>
+                    <option value="name">Sort by Name</option>
+                    <option value="steps">Sort by Steps</option>
+                  </select>
+                </div>
+              </div>
+
+              {searchQuery && (
+                <div className="text-xs text-muted-foreground">
+                  {filteredAndSortedExperiments.length} experiment{filteredAndSortedExperiments.length !== 1 ? 's' : ''} found
+                </div>
+              )}
+            </div>
+
             {showNewExperimentForm && (
               <div className="space-y-2 mb-4 p-3 bg-muted rounded-lg">
                 <Input
@@ -455,7 +551,7 @@ export function ExperimentNotebook() {
             )}
 
             <div className="space-y-2">
-              {experiments.map((exp) => (
+              {filteredAndSortedExperiments.map((exp) => (
                 <button
                   key={exp.id}
                   onClick={() => setActiveExperimentId(exp.id)}
