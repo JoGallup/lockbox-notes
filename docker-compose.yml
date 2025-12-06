@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Hardhat local development network
+  hardhat-node:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "8545:8545"
+    command: npx hardhat node
+    environment:
+      - MNEMONIC=test test test test test test test test test test test junk
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Frontend development server
+  frontend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    command: npm run dev
+    environment:
+      - NEXT_PUBLIC_RPC_URL=http://hardhat-node:8545
+    depends_on:
+      hardhat-node:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Production frontend
+  frontend-prod:
+    build:
+      context: .
+      target: production
+    ports:
+      - "8080:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  # Database for potential future use (e.g., caching, analytics)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:
